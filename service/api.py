@@ -2,58 +2,59 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from redis import Redis
-from rq import Queue
-from rq.job import Job
-import os
-import sys
-
-# Fix đường dẫn import
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+from rq import Queue, Connection
 from config import REDIS_URL
 from service.tasks import run_generation_task
+import uuid
 
-app = FastAPI(title="SDXL Local API")
+app = FastAPI()
 
 # Kết nối Redis
-try:
-    redis_conn = Redis.from_url(REDIS_URL)
-    q = Queue(connection=redis_conn)
-except Exception:
-    print("❌ Warning: Redis chưa chạy. API sẽ lỗi khi gọi /generate")
+redis_conn = Redis.from_url(REDIS_URL)
+q = Queue(connection=redis_conn)
 
+# Định nghĩa gói tin gửi lên (Mở rộng thêm các trường mới)
 class GenerateRequest(BaseModel):
     prompt: str
     negative_prompt: str = "low quality, blurry"
+    width: int = 512
+    height: int = 512
+    steps: int = 20
+    seed: int = -1
+    # --- Trường mới ---
+    image_path: str = None
+    task_type: str = "txt2img" # txt2img, img2img, controlnet
+    control_type: str = None
+    strength: float = 0.7
 
 @app.post("/generate")
-async def generate_image(req: GenerateRequest):
-    """Nhận prompt và đẩy vào hàng đợi"""
-    # Timeout 3600s (1 tiếng) vì chạy CPU rất lâu, tránh bị kill job giữa chừng
+def generate(req: GenerateRequest):
     job = q.enqueue(
-        run_generation_task, 
-        req.prompt, 
-        req.negative_prompt,
-        job_timeout=3600 
+        run_generation_task,
+        prompt=req.prompt,
+        negative_prompt=req.negative_prompt,
+        width=req.width,
+        height=req.height,
+        steps=req.steps,
+        seed=req.seed,
+        # Truyền tiếp cho Worker
+        image_path=req.image_path,
+        task_type=req.task_type,
+        control_type=req.control_type,
+        strength=req.strength
     )
     return {"job_id": job.get_id(), "status": "queued"}
 
 @app.get("/status/{job_id}")
-async def check_status(job_id: str):
-    """Kiểm tra xem ảnh đã tạo xong chưa"""
-    try:
-        job = Job.fetch(job_id, connection=redis_conn)
-    except Exception:
-        raise HTTPException(status_code=404, detail="Job ID not found")
-
-    response = {
-        "job_id": job_id,
-        "status": job.get_status(), # queued, started, finished, failed
-    }
-
+def get_status(job_id: str):
+    job = q.fetch_job(job_id)
+    if not job:
+        return {"status": "unknown"}
+    
+    if job.is_failed:
+        return {"status": "failed", "error": str(job.exc_info)}
+    
     if job.is_finished:
-        response["result"] = job.result  # Đường dẫn file ảnh
-    elif job.is_failed:
-        response["error"] = str(job.exc_info)
-
-    return response
+        return {"status": "finished", "result": job.result}
+        
+    return {"status": job.get_status()}

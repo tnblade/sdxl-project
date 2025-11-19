@@ -13,7 +13,7 @@ def img2img_edit(
     strength=IMG2IMG_STRENGTH, 
     guidance=GUIDANCE_SCALE, 
     seed=None, 
-    num_inference_steps=20,  # <--- ĐÃ THÊM: Để khớp với tasks.py
+    num_inference_steps=20,
     mask_path: str|None=None
 ):
     # 1. Load Pipeline
@@ -22,8 +22,8 @@ def img2img_edit(
     # 2. Xử lý ảnh đầu vào
     try:
         init = Image.open(init_image_path).convert('RGB')
-        # Resize ảnh về kích thước chia hết cho 8 (tránh lỗi Dimension Error)
-        init = init.resize((init.width // 8 * 8, init.height // 8 * 8))
+        # Resize ảnh mịn hơn
+        init = init.resize((init.width // 8 * 8, init.height // 8 * 8), Image.LANCZOS)
         
         mask = None
         if mask_path:
@@ -35,16 +35,15 @@ def img2img_edit(
 
     # 3. Xử lý Seed
     generator = None
-    if seed is not None:
+    if seed is not None and int(seed) != -1:
         generator = torch.Generator(device=pipe.device).manual_seed(int(seed))
 
     print(f"[IMG2IMG] Processing: '{prompt[:30]}...' | Strength: {strength} | Steps: {num_inference_steps}")
 
-    # 4. Generate (Trong chế độ tiết kiệm RAM)
+    # 4. Generate
     with torch.inference_mode():
         if mask:
-            # Nếu có mask (Inpaint mode - Cần pipeline inpaint nhưng ở đây dùng tạm img2img)
-            # Lưu ý: img2img pipeline chuẩn không nhận mask, code này demo giả định pipeline hỗ trợ
+            # Logic Inpaint (nếu pipeline hỗ trợ)
             out = pipe(
                 prompt=prompt, 
                 negative_prompt=negative_prompt,
@@ -56,7 +55,7 @@ def img2img_edit(
                 num_inference_steps=num_inference_steps
             )
         else:
-            # Chế độ thường
+            # Logic Img2Img thường
             out = pipe(
                 prompt=prompt, 
                 negative_prompt=negative_prompt,

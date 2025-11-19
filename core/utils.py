@@ -24,14 +24,16 @@ def resize_image_for_diffusion(image_path: str, max_dim: int = 1024):
 
 def image_to_canny(image_path: str):
     """Chuyển ảnh thường thành ảnh nét đứt (Canny edge) cho ControlNet"""
-    image = np.array(Image.open(image_path))
+    # Đọc ảnh bằng PIL rồi chuyển sang Numpy
+    pil_image = Image.open(image_path).convert("RGB")
+    image = np.array(pil_image)
     
     # Dùng OpenCV để lấy nét
     low_threshold = 100
     high_threshold = 200
     image = cv2.Canny(image, low_threshold, high_threshold)
     
-    # Chuyển về định dạng PIL để đưa vào model
+    # Chuyển về định dạng PIL 3 kênh màu để đưa vào model
     image = image[:, :, None]
     image = np.concatenate([image, image, image], axis=2)
     return Image.fromarray(image)
