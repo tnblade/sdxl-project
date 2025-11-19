@@ -2,7 +2,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from redis import Redis
-from rq import Queue, Connection
+from rq import Queue  # <--- Chỉ giữ lại Queue thôi
 from config import REDIS_URL
 from service.tasks import run_generation_task
 import uuid
