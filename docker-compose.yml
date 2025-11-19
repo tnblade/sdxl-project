@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: sdxl-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - sdxl-net
+
+  api:
+    build:
+      context: .
+      dockerfile: dockerfile.gpu   # <--- SỬA: Dùng file GPU
+    deploy:                        # <--- THÊM: Cấp quyền GPU
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    container_name: sdxl-api
+    command: uvicorn service.api:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DEVICE=cuda
+      - TORCH_DTYPE=float16
+      - SDXL_TEXT=stabilityai/stable-diffusion-xl-base-1.0
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    networks:
+      - sdxl-net
+
+  worker:
+    build:
+      context: .
+      dockerfile: dockerfile.gpu   # <--- SỬA: Dùng file GPU
+    deploy:                        # <--- THÊM: Cấp quyền GPU
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    container_name: sdxl-worker
+    command: python service/worker.py
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DEVICE=cuda
+      - TORCH_DTYPE=float16
+      - SDXL_TEXT=stabilityai/stable-diffusion-xl-base-1.0
+    depends_on:
+      - redis
+    networks:
+      - sdxl-net
+
+  ui:
+    build: .  # UI không cần GPU, dùng file thường cho nhẹ
+    container_name: sdxl-ui
+    command: streamlit run ui/streamlit_app.py
+    volumes:
+      - ./data:/app/data
+    environment:
+      - API_URL=http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    networks:
+      - sdxl-net
+
+networks:
+  sdxl-net:
+    driver: bridge
+
+#version CPU
+# version: '3.8'
+
+# services:
+#   # 1. Redis Service
+#   redis:
+#     image: redis:7-alpine
+#     container_name: sdxl-redis
+#     ports:
+#       - "6379:6379"
+#     networks:
+#       - sdxl-net
+
+#   # 2. API Service
+#   api:
+#     build: .    # Tự động tìm file 'Dockerfile' (mặc định)
+#     container_name: sdxl-api
+#     command: uvicorn service.api:app --host 0.0.0.0 --port 8000
+#     volumes:
+#       - ./models:/app/models
+#       - ./data:/app/data
+#     environment:
+#       - REDIS_URL=redis://redis:6379/0
+#       - DEVICE=cpu            # <--- CPU
+#       - TORCH_DTYPE=float32   # <--- Float32
+#       - SDXL_TEXT=models/sdxl
+#     ports:
+#       - "8000:8000"
+#     depends_on:
+#       - redis
+#     networks:
+#       - sdxl-net
+#     restart: always
+
+#   # 3. Worker Service
+#   worker:
+#     build: .    # Tự động tìm file 'Dockerfile' (mặc định)
+#     container_name: sdxl-worker
+#     command: python service/worker.py
+#     volumes:
+#       - ./models:/app/models
+#       - ./data:/app/data
+#     environment:
+#       - REDIS_URL=redis://redis:6379/0
+#       - DEVICE=cpu            # <--- CPU
+#       - TORCH_DTYPE=float32   # <--- Float32
+#       - SDXL_TEXT=models/sdxl
+#     depends_on:
+#       - redis
+#     networks:
+#       - sdxl-net
+#     restart: always
+
+#   # 4. UI Service
+#   ui:
+#     build: .
+#     container_name: sdxl-ui
+#     command: streamlit run ui/streamlit_app.py
+#     volumes:
+#       - ./data:/app/data
+#     environment:
+#       - API_URL=http://api:8000
+#     ports:
+#       - "8501:8501"
+#     depends_on:
+#       - api
+#     networks:
+#       - sdxl-net
+
+# networks:
+#   sdxl-net:
+#     driver: bridge

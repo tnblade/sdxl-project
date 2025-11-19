@@ -1,0 +1,8 @@
+# Bỏ qua thư mục model và data (sẽ dùng volume để mount vào)
+models/
+data/
+venv/
+.git/
+__pycache__/
+*.pyc
+.env

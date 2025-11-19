@@ -1,0 +1,30 @@
+# Core AI (PyTorch & Diffusers)
+# PyTorch sẽ được cài sẵn trong Base Image NVIDIA của dockerfile.gpu, 
+# nhưng mình cứ khai báo để pip check version.
+torch>=2.2.0
+torchvision
+transformers>=4.35.0
+diffusers>=0.24.0
+accelerate>=0.26.0
+safetensors
+
+# 🔥 QUAN TRỌNG CHO GPU: Thư viện tăng tốc (Giảm VRAM, tăng tốc độ 30%)
+xformers
+
+# Image Processing
+opencv-python-headless
+Pillow
+numpy<2.0
+
+# Backend & Queue
+fastapi
+uvicorn[standard]
+python-multipart
+redis
+rq
+
+# UI
+streamlit
+
+# Utils
+python-dotenv

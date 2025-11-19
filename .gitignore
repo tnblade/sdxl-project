@@ -1,0 +1,13 @@
+# Bỏ qua thư mục models nặng nề
+models/
+
+# Bỏ qua ảnh và dữ liệu tạm
+data/
+
+# Bỏ qua môi trường ảo và file tạm của Python
+venv/
+__pycache__/
+*.pyc
+
+# Bỏ qua file cấu hình mật (quan trọng)
+.env

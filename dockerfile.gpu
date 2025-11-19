@@ -1,0 +1,21 @@
+# Dockerfile.gpu
+# Dùng Base Image của NVIDIA để nhận diện Driver Card màn hình
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
+
+# Cài đặt Python và git
+RUN apt-get update && apt-get install -y python3 python3-pip git wget build-essential libgl1-mesa-glx
+
+WORKDIR /app
+
+COPY requirements_gpu.txt requirements.txt
+# Cài thư viện hỗ trợ GPU
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+COPY . /app
+
+# Mở cổng
+EXPOSE 8000 8501
+
+# Chạy server
+CMD ["uvicorn", "service.api:app", "--host", "0.0.0.0", "--port", "8000"]
