@@ -12,7 +12,7 @@ MODELS_MAP = {
     "controlnet-openpose": "thibaud/controlnet-openpose-sdxl-1.0",
 }
 
-# ✅ Lấy file cấu hình và file fp16
+# Lấy file cấu hình và file fp16
 ALLOW_PATTERNS = [
     "*.json",
     "*.txt",
@@ -21,7 +21,7 @@ ALLOW_PATTERNS = [
     "*.fp16.bin",
 ]
 
-# ⛔ CHẶN TRIỆT ĐỂ (Sử dụng **/ để tìm sâu trong thư mục con)
+# CHẶN TRIỆT ĐỂ (Sử dụng **/ để tìm sâu trong thư mục con)
 IGNORE_PATTERNS = [
     "*.ckpt", "*.h5", "*.msgpack",
     # Chặn file root khổng lồ
@@ -29,11 +29,9 @@ IGNORE_PATTERNS = [
     "sd_xl_base_1.0_0.9vae.safetensors",
     "sd_xl_refiner_1.0.safetensors",
     
-    # 🔥 KHẮC PHỤC VẤN ĐỀ 20GB Ở ĐÂY:
     # Chặn file UNet bản gốc (FP32) nằm trong folder "unet/"
     "**/diffusion_pytorch_model.safetensors", 
     
-    # Chặn file Text Encoder bản gốc (FP32) nằm trong folder "text_encoder/"
     "**/model.safetensors",
 ]
 
@@ -43,9 +41,8 @@ def ensure_dirs():
 
 def download_model(folder_name, repo_id):
     local_path = os.path.join(BASE_DIR, folder_name)
-    print(f"\n🚀 Processing: {folder_name}")
+    print(f"\n Processing: {folder_name}")
     
-    # Nếu muốn tải lại từ đầu để test dung lượng, hãy xóa folder cũ bằng tay hoặc uncomment dòng dưới
     # import shutil; shutil.rmtree(local_path, ignore_errors=True)
 
     snapshot_download(
@@ -56,7 +53,7 @@ def download_model(folder_name, repo_id):
         allow_patterns=ALLOW_PATTERNS,
         ignore_patterns=IGNORE_PATTERNS, # <-- Logic chặn mới nằm ở đây
     )
-    print(f"   ✅ [DONE] Saved to {local_path}")
+    print(f"   [DONE] Saved to {local_path}")
 
 if __name__ == "__main__":
     ensure_dirs()
