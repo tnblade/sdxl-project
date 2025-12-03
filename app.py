@@ -28,18 +28,13 @@ manager = get_manager()
 # --- SIDEBAR ---
 with st.sidebar:
     st.header("Cấu hình")
-    
-    # CẬP NHẬT: Thêm slider chọn số lượng ảnh
     num_images = st.slider("Số lượng ảnh", min_value=1, max_value=5, value=1)
-    
     width = st.select_slider("Chiều rộng", options=[512, 768, 1024], value=1024)
     height = st.select_slider("Chiều cao", options=[512, 768, 1024], value=1024)
     steps = st.slider("Số bước vẽ (Steps)", 10, 50, 30)
-    
     seed = st.number_input("Hạt giống (-1 ngẫu nhiên)", value=-1)
     if seed == -1:
         seed = random.randint(0, 2147483647)
-
     st.markdown("---")
     st.info("Task 2: LoRA loader sẽ được thêm vào đây sau.")
 
@@ -56,6 +51,11 @@ with col1:
     st.markdown("### Ảnh mẫu (Tùy chọn cho Img2Img)")
     uploaded_file = st.file_uploader("Kéo thả file vào đây", type=['png', 'jpg', 'jpeg'])
     
+    # --- MỚI: HIỆN ẢNH INPUT NGAY KHI UPLOAD ---
+    if uploaded_file is not None:
+        st.image(uploaded_file, caption="Ảnh Input của bạn", use_container_width=True)
+    # -------------------------------------------
+    
     generate_btn = st.button("TẠO ẢNH")
 
 with col2:
@@ -64,13 +64,13 @@ with col2:
     if generate_btn:
         with st.spinner(f'Đang vẽ {num_images} ảnh...'):
             try:
-                # SỬA LỖI Ở ĐÂY:
-                # Chuyển đổi file upload (Bytes) thành đối tượng PIL Image
+                # Chuyển đổi file upload thành PIL Image
                 real_input_image = None
                 if uploaded_file:
+                    # Reset con trỏ file về đầu để đọc lại (phòng hờ việc hiển thị ở trên đã đọc hết file)
+                    uploaded_file.seek(0)
                     real_input_image = Image.open(uploaded_file).convert("RGB")
                 
-                # Gọi hàm generate
                 result_images = manager.generate(
                     prompt=prompt,
                     negative_prompt=negative_prompt,
@@ -79,7 +79,7 @@ with col2:
                     height=height,
                     seed=seed,
                     num_images=num_images,
-                    input_image=real_input_image # Truyền ảnh PIL vào
+                    input_image=real_input_image
                 )
                 
                 for idx, img in enumerate(result_images):
