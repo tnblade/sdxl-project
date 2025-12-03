@@ -1,5 +1,9 @@
+# app.py
+# Ứng dụng Streamlit chính. Giao diện người dùng và tương tác đều ở đây.
+
+
 import streamlit as st
-from core.pipeline_handler import SDXLManager
+from core import SDXLManager # Import từ core/__init__.py
 from PIL import Image
 import random
 
@@ -51,10 +55,9 @@ with col1:
     st.markdown("### Ảnh mẫu (Tùy chọn cho Img2Img)")
     uploaded_file = st.file_uploader("Kéo thả file vào đây", type=['png', 'jpg', 'jpeg'])
     
-    # --- MỚI: HIỆN ẢNH INPUT NGAY KHI UPLOAD ---
+    # Hiện ảnh Input ngay khi upload
     if uploaded_file is not None:
         st.image(uploaded_file, caption="Ảnh Input của bạn", use_container_width=True)
-    # -------------------------------------------
     
     generate_btn = st.button("TẠO ẢNH")
 
@@ -67,8 +70,7 @@ with col2:
                 # Chuyển đổi file upload thành PIL Image
                 real_input_image = None
                 if uploaded_file:
-                    # Reset con trỏ file về đầu để đọc lại (phòng hờ việc hiển thị ở trên đã đọc hết file)
-                    uploaded_file.seek(0)
+                    uploaded_file.seek(0) # Reset con trỏ file
                     real_input_image = Image.open(uploaded_file).convert("RGB")
                 
                 result_images = manager.generate(
