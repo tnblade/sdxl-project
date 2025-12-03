@@ -1,0 +1,12 @@
+diffusers>=0.25.0
+transformers>=4.30.0
+accelerate>=0.25.0
+safetensors
+opencv-python
+invisible-watermark>=0.2.0
+torch
+xformers
+scipy
+streamlit
+pyngrok
+huggingface_hub
