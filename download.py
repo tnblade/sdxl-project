@@ -1,4 +1,6 @@
-# File: download.py
+# download.py
+# Script để tải model SDXL Base 1.0 (bản FP16 tối ưu cho Colab T4)
+
 import os
 from huggingface_hub import snapshot_download
 

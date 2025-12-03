@@ -10,3 +10,7 @@ scipy
 streamlit
 pyngrok
 huggingface_hub
+#---------Task2 finetuning additions---------
+bitsandbytes>=0.40.0      # MỚI: Tối ưu bộ nhớ 8-bit
+peft              # MỚI: Thư viện quản lý LoRA
+dataset           # MỚI: Xử lý dữ liệu
