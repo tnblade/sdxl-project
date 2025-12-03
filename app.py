@@ -64,9 +64,13 @@ with col2:
     if generate_btn:
         with st.spinner(f'Đang vẽ {num_images} ảnh...'):
             try:
-                input_img = uploaded_file if uploaded_file else None
+                # SỬA LỖI Ở ĐÂY:
+                # Chuyển đổi file upload (Bytes) thành đối tượng PIL Image
+                real_input_image = None
+                if uploaded_file:
+                    real_input_image = Image.open(uploaded_file).convert("RGB")
                 
-                # Gọi hàm generate với tham số num_images mới
+                # Gọi hàm generate
                 result_images = manager.generate(
                     prompt=prompt,
                     negative_prompt=negative_prompt,
@@ -74,11 +78,10 @@ with col2:
                     width=width,
                     height=height,
                     seed=seed,
-                    num_images=num_images, # Truyền số lượng ảnh vào
-                    input_image=input_img
+                    num_images=num_images,
+                    input_image=real_input_image # Truyền ảnh PIL vào
                 )
                 
-                # Hiển thị kết quả (Duyệt qua danh sách ảnh trả về)
                 for idx, img in enumerate(result_images):
                     st.image(
                         img, 

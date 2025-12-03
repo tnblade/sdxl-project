@@ -40,7 +40,6 @@ class SDXLManager:
         generated_images = []
         
         for i in range(num_images):
-            # Mỗi ảnh sẽ có seed tăng dần để tạo sự khác biệt (seed, seed+1, seed+2...)
             current_seed = seed + i
             generator = torch.Generator(device="cpu").manual_seed(current_seed)
             
@@ -49,7 +48,15 @@ class SDXLManager:
             if input_image:
                 # Img2Img Mode
                 pipe = self.load_pipeline("img2img")
-                init_img = load_image(input_image).convert("RGB")
+                
+                # SỬA LỖI Ở ĐÂY: Kiểm tra xem input_image là đường dẫn hay là ảnh PIL
+                if isinstance(input_image, str):
+                    init_img = load_image(input_image).convert("RGB")
+                else:
+                    # Nếu đã là PIL Image (từ app.py gửi sang) thì dùng luôn
+                    init_img = input_image
+                
+                # Resize ảnh input cho khớp với width/height mong muốn để tránh lỗi size
                 init_img = init_img.resize((width, height))
                 
                 image = pipe(
@@ -63,6 +70,7 @@ class SDXLManager:
                 ).images[0]
             else:
                 # Txt2Img Mode
+                # ... (Giữ nguyên logic text to img)
                 pipe = self.load_pipeline("txt2img")
                 image = pipe(
                     prompt=prompt, 
@@ -76,4 +84,4 @@ class SDXLManager:
             
             generated_images.append(image)
             
-        return generated_images # Trả về một danh sách (List) các ảnh
+        return generated_images
