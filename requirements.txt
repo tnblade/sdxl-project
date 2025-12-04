@@ -34,3 +34,5 @@ regex
 matplotlib
 tensorboard
 git+https://github.com/openai/CLIP.git
+
+PyYAML  <-- THÊM DÒNG NÀY
