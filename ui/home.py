@@ -1,5 +1,5 @@
 # ui/home.py
-# File này chịu trách nhiệm hiển thị màn hình chính, upload ảnh và gọi hàm vẽ.
+  
 
 import streamlit as st
 from PIL import Image
@@ -12,7 +12,7 @@ def show_home(manager, scorer, config):
 
     with col1:
         st.subheader("Nhập liệu")
-        prompt = st.text_area("Mô tả ảnh (Prompt)", value="a photo of sks style", height=100)
+        prompt = st.text_area("Mô tả ảnh (Prompt)", value="a photo of sky", height=100)
         negative_prompt = st.text_input("Loại bỏ (Negative)", value="ugly, blurry")
         
         uploaded_file = st.file_uploader("Ảnh mẫu (Img2Img)", type=['png', 'jpg', 'jpeg'])
