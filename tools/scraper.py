@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*- 
 # Công cụ tải ảnh từ Safebooru dựa trên từ khóa
 # tools/scraper.py
 
