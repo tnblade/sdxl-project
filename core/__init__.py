@@ -2,3 +2,4 @@
 #--- IGNORE ---
 
 from .generator import SDXLManager
+from .scorer import ImageScorer
