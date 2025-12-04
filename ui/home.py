@@ -13,7 +13,7 @@ def show_home(manager, scorer, config):
     with col1:
         st.subheader("Nhập liệu")
         prompt = st.text_area("Mô tả ảnh (Prompt)", value="a photo of sky", height=100)
-        negative_prompt = st.text_input("Loại bỏ (Negative)", value="ugly, blurry")
+        negative_prompt = st.text_input("Loại bỏ (Negative)", value="ugly, blurry, low quality, lowres, out of focus, deformed, distorted, bad anatomy, bad proportions, extra limbs, missing limbs, extra fingers, fused fingers, duplicated, watermark, signature, text, jpeg artifacts, grainy, noisy, oversaturated, overexposed, underexposed")
         
         uploaded_file = st.file_uploader("Ảnh mẫu (Img2Img)", type=['png', 'jpg', 'jpeg'])
         real_input_image = None
