@@ -1,4 +1,4 @@
-# fine_turning/preprocess.py
+# fine_tuning/preprocess.py
 # Tool chuẩn hóa Dataset cho SDXL
 # Chuyển tất cả ảnh về định dạng JPG, crop vuông giữa và resize về 1024x1024
 # Sử dụng thư viện Pillow để xử lý ảnh
