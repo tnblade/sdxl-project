@@ -1,3 +1,8 @@
+# fine_turning/lora.py
+# Script khởi chạy quá trình fine-tuning LoRA cho SDXL trên Google Colab T4
+# Sử dụng script chuẩn từ thư viện Diffusers của HuggingFace với một số cấu hình tối ưu cho T4 (15GB VRAM)
+
+
 import os
 import subprocess
 import argparse

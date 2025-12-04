@@ -14,3 +14,14 @@ huggingface_hub
 bitsandbytes>=0.40.0      # MỚI: Tối ưu bộ nhớ 8-bit
 peft              # MỚI: Thư viện quản lý LoRA
 dataset           # MỚI: Xử lý dữ liệu
+tqdm  # <-- Thêm dòng này vào cuối file
+Pillow            # MỚI: Xử lý ảnh
+#-------------------------------------------
+requests # MỚI: Thư viện HTTP
+
+ftfy
+regex
+git+https://github.com/openai/CLIP.git  # Thư viện CLIP gốc
+
+matplotlib  # MỚI
+tensorboard # MỚI

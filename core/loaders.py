@@ -49,3 +49,20 @@ class ModelLoader:
     def unload_lora(self):
         if self.pipeline:
             self.pipeline.unload_lora_weights()
+            
+    # --- THÊM 2 HÀM NÀY CHO BENCHMARK ---
+    def load_lora(self, lora_path, adapter_name="default"):
+        """Nạp LoRA vào pipeline đang chạy"""
+        if self.pipeline:
+            print(f"🔄 Loading LoRA adapter: {lora_path}")
+            self.pipeline.load_lora_weights(lora_path, adapter_name=adapter_name)
+            self.pipeline.fuse_lora() # Kết hợp weights để chạy nhanh hơn
+            print("✅ LoRA Loaded & Fused.")
+
+    def unload_lora(self):
+        """Gỡ bỏ LoRA để quay về model gốc"""
+        if self.pipeline:
+            print(f"🔄 Unloading LoRA...")
+            self.pipeline.unfuse_lora()
+            self.pipeline.unload_lora_weights()
+            print("✅ LoRA Unloaded.")
