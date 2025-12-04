@@ -19,7 +19,7 @@ def show_home(manager, scorer, config):
         real_input_image = None
         
         if uploaded_file:
-            st.image(uploaded_file, caption="Input", use_container_width=True)
+            st.image(uploaded_file, caption="Input", width='stretch')
             uploaded_file.seek(0)
             real_input_image = Image.open(uploaded_file).convert("RGB")
         
@@ -44,7 +44,7 @@ def show_home(manager, scorer, config):
                     
                     # Hiển thị
                     for idx, img in enumerate(images):
-                        st.image(img, caption=f"Seed: {config['seed']+idx}", use_container_width=True)
+                        st.image(img, caption=f"Seed: {config['seed']+idx}", width='stretch')
                         
                         # Chấm điểm (Nếu bật)
                         if config['enable_scoring']:
