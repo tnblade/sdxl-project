@@ -1,0 +1,22 @@
+import json
+import os
+
+prompts = [
+    # Test Character (Nhân vật)
+    "char_style_v1, anime girl, standing in the rain, crying, emotional, cinematic lighting, 8k",
+    "char_style_v1, anime girl, warrior, holding a sword, fire background, intense look",
+    "char_style_v1, anime girl, school uniform, reading book in library, sunlight, peaceful",
+    
+    # Test Scenery (Phong cảnh)
+    "scene_style_v1, anime scenery, cyberpunk city at night, neon lights, rain, reflection",
+    "scene_style_v1, anime scenery, ancient temple in the forest, mysterious fog, moss, fantasy",
+    
+    # Test độ khó (Complex)
+    "char_style_v1, anime girl, playing violin, petals falling, wind, intricate details, masterpiece"
+]
+
+os.makedirs("sdxl-project", exist_ok=True)
+with open("sdxl-project/benchmark_prompts.json", "w") as f:
+    json.dump(prompts, f, indent=2)
+
+print("✅ Đã tạo bộ đề thi: benchmark_prompts.json")
