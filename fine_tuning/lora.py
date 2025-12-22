@@ -102,7 +102,7 @@ def run_lora_training(data_dir, output_dir, prompt, base_model_path):
         "--mixed_precision=fp16",
         "--seed=42",
         f"--output_dir={output_dir}",
-        f"--validation_prompt={prompt}",
+        # f"--validation_prompt={prompt}",
         "--gradient_checkpointing", 
         "--use_8bit_adam",          
         "--report_to=tensorboard",
