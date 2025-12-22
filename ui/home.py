@@ -1,43 +1,49 @@
+# ui/home.py
+# Trang chính giao diện vẽ ảnh với Stable Diffusion
+
 import streamlit as st
 from PIL import Image
 
 def show_home(manager, scorer, config):
-    st.title("✨ SDXL Anime Lab ✨")
+    st.title("✨ AI Image Generator ✨")
 
     col1, col2 = st.columns([1, 1])
 
     with col1:
-        st.subheader("📝 Nhập liệu")
+        st.subheader("1. Nhập liệu")
         
-        # Tự động điền Trigger Word vào đầu prompt nếu có
+        # Tự động điền Trigger Word vào đầu prompt
         current_trigger = st.session_state.get('current_trigger', '')
         base_prompt = "masterpiece, best quality, highres, 8k, vivid colors"
         
         if current_trigger:
             default_val = f"{current_trigger}, {base_prompt}"
-            st.info(f"💡 Đang dùng Trigger: {current_trigger}")
+            st.caption(f"💡 Đang dùng Style: {current_trigger}")
         else:
             default_val = base_prompt
 
         prompt = st.text_area("Mô tả ảnh (Prompt):", value=default_val, height=150)
         negative_prompt = st.text_input("Loại bỏ (Negative):", value="ugly, blurry, low quality, lowres, deformed, bad anatomy, nsfw, text, watermark, bad hands")
         
-        uploaded_file = st.file_uploader("Ảnh mẫu (Img2Img - Tùy chọn)", type=['png', 'jpg', 'jpeg'])
+        st.markdown("### Ảnh mẫu (Tùy chọn cho Img2Img)")
+        uploaded_file = st.file_uploader("Kéo thả file vào đây", type=['png', 'jpg', 'jpeg'])
         real_input_image = None
         
         if uploaded_file:
             # Sửa lỗi hiển thị: Mở ảnh bằng PIL trước
             image_preview = Image.open(uploaded_file)
-            st.image(image_preview, caption="Ảnh đầu vào", use_container_width=True)
+            st.image(image_preview, caption="Input", use_container_width=True)
             
             # Reset con trỏ và convert để đưa vào model
             uploaded_file.seek(0)
             real_input_image = Image.open(uploaded_file).convert("RGB")
         
-        generate_btn = st.button("🎨 TẠO ẢNH NGAY", type="primary", use_container_width=True)
+        # Nút tạo ảnh màu đỏ giống hình mẫu
+        st.markdown("<br>", unsafe_allow_html=True)
+        generate_btn = st.button("TẠO ẢNH", type="primary", use_container_width=True)
 
     with col2:
-        st.subheader("🖼️ Kết quả")
+        st.subheader("2. Kết quả")
         if generate_btn:
             with st.spinner(f"Đang vẽ {config['num_images']} ảnh..."):
                 try:
@@ -59,8 +65,8 @@ def show_home(manager, scorer, config):
                             with st.spinner("Đang chấm điểm..."):
                                 c_score, a_score = scorer.get_scores(img, prompt)
                                 m1, m2 = st.columns(2)
-                                m1.metric("Đúng đề (CLIP)", c_score)
-                                m2.metric("Thẩm mỹ (Aes)", f"{a_score}/10")
+                                m1.metric("CLIP", c_score)
+                                m2.metric("Aesthetic", f"{a_score}/10")
                             
                 except Exception as e:
                     st.error(f"Lỗi: {e}")
