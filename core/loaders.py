@@ -1,3 +1,6 @@
+# core/loaders.py
+# Loader cho Model và LoRA Adapters
+
 import torch
 import os
 # Thêm StableDiffusionXLPipeline vào dòng import
