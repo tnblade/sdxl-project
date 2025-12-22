@@ -17,7 +17,7 @@ except ImportError:
     sys.exit(1)
 
 # --- CẤU HÌNH ---
-PROMPT_FILE = "sdxl-project/benchmark_prompts.json"
+PROMPT_FILE = "benchmark_prompts.json"
 OUTPUT_ROOT = "benchmark_results"
 BASE_MODEL = "/kaggle/input/stable-diffusion-xl/pytorch/base-1-0/1/sd_xl_base_1.0.safetensors"
 
