@@ -7,10 +7,9 @@ import argparse
 from tqdm import tqdm
 import time
 
-# API của Safebooru
 API_URL = "https://safebooru.org/index.php"
 
-# Tag cấm – lọc ảnh sexy / ecchi (dù rating = general)
+# Tag cấm – lọc ảnh sexy / ecchi
 BANNED_TAGS = {
     "bikini", "swimsuit", "under_boob", "sideboob",
     "large_breasts", "ass", "ass_focus",
@@ -22,7 +21,7 @@ BANNED_TAGS = {
 def download_images(tags, limit, output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
-    print(f"🔍 Đang tìm kiếm: '{tags}' | Số lượng: {limit}...")
+    print(f"🔍 Đang tìm kiếm: '{tags}' | Số lượng: {limit}")
 
     count = 0
     page = 0
@@ -48,45 +47,47 @@ def download_images(tags, limit, output_dir):
             response = requests.get(API_URL, params=params, headers=headers, timeout=15)
 
             if response.status_code != 200:
-                print(f"❌ Lỗi kết nối HTTP {response.status_code}")
+                print(f"❌ HTTP {response.status_code}")
                 break
 
-            # Safebooru có thể trả "" thay vì []
             try:
                 posts = response.json()
                 if not isinstance(posts, list):
-                    print("⚠️ API không trả danh sách post.")
-                    break
+                    print("⚠️ API không trả list.")
+                    page += 1
+                    continue
             except Exception:
                 if response.text.strip() == "":
-                    print("⚠️ API trả về rỗng (không có ảnh với tag này).")
+                    print(f"⚠️ Page {page}: rỗng")
+                    page += 1
+                    continue
                 else:
                     print(f"❌ JSON lỗi: {response.text[:200]}")
-                break
+                    break
 
+            # ❗ QUAN TRỌNG: KHÔNG BREAK KHI PAGE RỖNG
             if not posts:
-                print("⚠️ Hết ảnh để tải.")
-                break
+                print(f"⚠️ Page {page}: không có post, skip")
+                page += 1
+                continue
 
             for post in posts:
                 if count >= limit:
                     break
 
-                # ===== LỌC ẢNH =====
                 post_tags = post.get("tags", "").split()
 
-                # Chỉ nhận ảnh general
+                # Chỉ lấy ảnh general
                 if post.get("rating") != "general":
                     continue
 
-                # Bắt buộc highres
-                if "highres" not in post_tags:
-                    continue
+                # ❌ BỎ ÉP highres (nguyên nhân 0 ảnh)
+                # if "highres" not in post_tags:
+                #     continue
 
-                # Loại ảnh sexy / ecchi
+                # Lọc sexy / ecchi
                 if any(tag in BANNED_TAGS for tag in post_tags):
                     continue
-                # ====================
 
                 # Build URL ảnh
                 if post.get("file_url"):
@@ -120,13 +121,18 @@ def download_images(tags, limit, output_dir):
             break
 
     pbar.close()
-    print(f"\n✅ Đã tải xong {count} ảnh vào thư mục: {output_dir}")
+    print(f"\n✅ Đã tải {count} ảnh vào: {output_dir}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Safebooru Anime Image Scraper (Clean Dataset)")
-    parser.add_argument("--tags", type=str, required=True, help="Tag Safebooru (VD: 1girl solo highres)")
-    parser.add_argument("--limit", type=int, default=50, help="Số lượng ảnh cần tải")
-    parser.add_argument("--output", type=str, default="raw_images", help="Thư mục lưu ảnh")
+    parser = argparse.ArgumentParser(
+        description="Safebooru Anime Image Scraper (Clean Dataset)"
+    )
+    parser.add_argument(
+        "--tags", type=str, required=True,
+        help="Tag Safebooru (VD: scenery landscape no_humans rating:general)"
+    )
+    parser.add_argument("--limit", type=int, default=50)
+    parser.add_argument("--output", type=str, default="raw_images")
 
     args = parser.parse_args()
     download_images(args.tags, args.limit, args.output)
