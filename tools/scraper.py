@@ -39,11 +39,26 @@ def download_images(tags, limit, output_dir):
         
         try:
             response = requests.get(API_URL, params=params, headers=headers)
+            
+            # Check if response is successful
             if response.status_code != 200:
                 print(f"❌ Lỗi kết nối: {response.status_code}")
+                # Print first 500 chars of content to debug
+                print(f"Response content: {response.text[:500]}")
                 break
-                
-            posts = response.json()
+            
+            try:
+                posts = response.json()
+            except ValueError:
+                # If JSON decode fails, it might be an empty response or HTML error
+                # Safebooru sometimes returns empty string for empty results instead of []
+                if not response.text.strip():
+                     print("⚠️ API trả về dữ liệu rỗng (Hết ảnh hoặc lỗi server).")
+                     break
+                else:
+                     print(f"❌ Lỗi định dạng JSON. Response text: {response.text[:200]}")
+                     break
+
             if not posts:
                 print("⚠️ Hết ảnh để tải!")
                 break
@@ -51,29 +66,36 @@ def download_images(tags, limit, output_dir):
             for post in posts:
                 if count >= limit: break
                 
-                # Bỏ qua ảnh không có URL
-                if 'file_url' not in post: continue
-                
-                img_url = "https://safebooru.org/images/" + post['directory'] + "/" + post['image']
-                
+                # Ưu tiên lấy file_url nếu có, nếu không thì tự build
+                if 'file_url' in post:
+                    img_url = post['file_url']
+                elif 'image' in post and 'directory' in post:
+                     img_url = f"https://safebooru.org/images/{post['directory']}/{post['image']}"
+                else:
+                    continue
+
                 # Tên file
-                filename = f"{post['id']}.jpg"
+                filename = f"{post.get('id', int(time.time()))}.jpg"
                 filepath = os.path.join(output_dir, filename)
                 
                 # Tải ảnh
                 if not os.path.exists(filepath):
-                    img_data = requests.get(img_url, headers=headers).content
-                    with open(filepath, 'wb') as f:
-                        f.write(img_data)
-                    
-                    count += 1
-                    pbar.update(1)
+                    try:
+                        img_data = requests.get(img_url, headers=headers, timeout=10).content
+                        with open(filepath, 'wb') as f:
+                            f.write(img_data)
+                        
+                        count += 1
+                        pbar.update(1)
+                    except Exception as img_err:
+                        print(f"⚠️ Lỗi tải ảnh {img_url}: {img_err}")
+                        continue
                     
             page += 1
             time.sleep(1) # Nghỉ 1 chút để không bị server chặn
             
         except Exception as e:
-            print(f"❌ Lỗi: {e}")
+            print(f"❌ Lỗi vòng lặp chính: {e}")
             break
 
     pbar.close()
