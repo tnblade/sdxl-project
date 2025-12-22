@@ -81,6 +81,7 @@ def run_lora_training(data_dir, output_dir, prompt, base_model_path):
         SCRIPT_NAME
     ]
     
+# Các tham số training tối ưu (Đã chỉnh sửa để chạy nhanh)
     args = [
         f"--pretrained_model_name_or_path={train_model_path}",
         f"--train_data_dir={data_dir}",
@@ -88,7 +89,12 @@ def run_lora_training(data_dir, output_dir, prompt, base_model_path):
         "--resolution=1024",
         "--random_flip",
         "--train_batch_size=1",
-        "--num_train_epochs=10",
+        
+        # --- CẤU HÌNH TỐC ĐỘ CAO (FAST TRAINING) ---
+        "--num_train_epochs=4",             # Giảm từ 10 xuống 4 (đủ cho 500 ảnh)
+        "--gradient_accumulation_steps=4",  # Tăng tốc độ học (gom 4 bước làm 1)
+        # -------------------------------------------
+        
         "--checkpointing_steps=500",
         "--learning_rate=1e-4",
         "--lr_scheduler=constant",
@@ -102,7 +108,6 @@ def run_lora_training(data_dir, output_dir, prompt, base_model_path):
         "--report_to=tensorboard",
         "--logging_dir=logs"
     ]
-    
     cmd.extend(args)
 
     print(f"\n⚡ Lệnh thực thi: {' '.join(cmd)}")
