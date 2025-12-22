@@ -7,7 +7,6 @@ import os
 import glob
 
 # Đường dẫn chứa file LoRA (Chuẩn Linux cho Kaggle)
-# Code sẽ tự động tìm file trong folder này
 LORA_DIR = "/kaggle/working/sdxl-project/fine_tuning/lora"
 
 def get_available_loras():
@@ -19,11 +18,10 @@ def get_available_loras():
             pass
         
     # Quét tất cả file .safetensors
-    # os.path.join giúp nối đường dẫn chuẩn dù là Windows hay Linux
     search_path = os.path.join(LORA_DIR, "*.safetensors")
     files = glob.glob(search_path)
     
-    # Lấy tên file để hiển thị cho gọn
+    # Lấy tên file
     lora_list = ["None"] + [os.path.basename(f) for f in files]
     return lora_list
 
@@ -38,23 +36,20 @@ def show_sidebar(manager):
         # Quét file tự động
         available_loras = get_available_loras()
         
-        # Kiểm tra nếu chưa có file nào
         if len(available_loras) == 1:
-            st.warning("⚠️ Chưa có file LoRA nào. Hãy train hoặc upload file vào thư mục trên.")
+            st.warning("⚠️ Chưa có file LoRA nào.")
 
         selected_lora_name = st.selectbox("Chọn Model LoRA:", available_loras)
         
-        # Gợi ý Trigger Word dựa trên tên file (Logic thông minh)
+        # Gợi ý Trigger Word
         default_trigger = ""
         name_lower = selected_lora_name.lower()
         if "char" in name_lower: default_trigger = "char_style_v1, anime girl"
         elif "scene" in name_lower: default_trigger = "scene_style_v1, anime scenery"
         
-        # Ô nhập Trigger Word
         trigger_word = st.text_input("Trigger Word (Từ khóa):", value=default_trigger)
         st.session_state['current_trigger'] = trigger_word
         
-        # Nút Nạp/Gỡ
         col1, col2 = st.columns(2)
         if col1.button("📥 Nạp LoRA", type="primary"):
             if selected_lora_name != "None":
@@ -77,12 +72,15 @@ def show_sidebar(manager):
 
         st.markdown("---")
         
-        # --- PHẦN 2: THÔNG SỐ CƠ BẢN ---
+        # --- PHẦN 2: THÔNG SỐ ẢNH (ĐÃ GIỚI HẠN MAX 1024) ---
         st.subheader("Thông số ảnh")
         config = {}
         config['num_images'] = st.slider("Số lượng ảnh", 1, 4, 1)
-        config['width'] = st.select_slider("Chiều rộng", options=[768, 1024, 1280], value=1024)
-        config['height'] = st.select_slider("Chiều cao", options=[768, 1024, 1280], value=1024)
+        
+        # Đã bỏ tùy chọn 1280, chỉ giữ lại các mốc an toàn
+        config['width'] = st.select_slider("Chiều rộng", options=[768, 1024], value=1024)
+        config['height'] = st.select_slider("Chiều cao", options=[768, 1024], value=1024)
+        
         config['steps'] = st.slider("Số bước (Steps)", 20, 50, 30)
         
         seed_input = st.number_input("Hạt giống (-1 ngẫu nhiên)", value=-1)
