@@ -1,3 +1,6 @@
+# benchmark_prompts.json
+# Bộ đề thi cho đánh giá mô hình Stable Diffusion XL
+
 import json
 import os
 
@@ -20,3 +23,5 @@ with open("sdxl-project/benchmark_prompts.json", "w") as f:
     json.dump(prompts, f, indent=2)
 
 print("✅ Đã tạo bộ đề thi: benchmark_prompts.json")
+
+

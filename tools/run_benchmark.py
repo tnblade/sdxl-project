@@ -1,3 +1,6 @@
+# tools/run_benchmark.py
+# Tool tự động sinh ảnh benchmark và chấm điểm mô hình Stable Diffusion XL
+
 import os
 import sys
 import json
