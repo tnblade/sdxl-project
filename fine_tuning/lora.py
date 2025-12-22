@@ -84,7 +84,7 @@ def run_lora_training(data_dir, output_dir, prompt, base_model_path):
     args = [
         f"--pretrained_model_name_or_path={train_model_path}",
         f"--train_data_dir={data_dir}",
-        "--caption_column=text",
+        "--caption_column=image",
         "--resolution=1024",
         "--random_flip",
         "--train_batch_size=1",
