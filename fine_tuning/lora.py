@@ -8,63 +8,79 @@ import subprocess
 import argparse
 import sys
 import torch
+import yaml
 from accelerate.utils import write_basic_config
 
 # --- Hack đường dẫn để import Config ---
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from core.config import Config
 
-SCRIPT_URL = "https://raw.githubusercontent.com/huggingface/diffusers/main/examples/text_to_image/train_text_to_image_lora_sdxl.py"
+# --- SỬA LỖI VERSION: Dùng phiên bản script khớp với Diffusers 0.34.0 ---
+# Thay vì dùng 'main' (luôn thay đổi), ta dùng tag 'v0.34.0' để ổn định
+SCRIPT_URL = "https://raw.githubusercontent.com/huggingface/diffusers/v0.34.0/examples/text_to_image/train_text_to_image_lora_sdxl.py"
 SCRIPT_NAME = "train_lora_sdxl_script.py"
+ACCELERATE_CONFIG_FILE = "accelerate_config.yaml"
 
 def download_script():
-    """Tải script training chuẩn"""
-    if not os.path.exists(SCRIPT_NAME):
-        print(f"⏳ [LoRA] Đang tải script chuẩn từ HuggingFace...")
-        try:
-            subprocess.run(["wget", "-q", SCRIPT_URL, "-O", SCRIPT_NAME], check=True)
-        except Exception as e:
-            print(f"❌ Lỗi tải script: {e}")
-            sys.exit(1)
+    """Tải script training chuẩn từ HuggingFace"""
+    # Xóa script cũ nếu có để đảm bảo tải bản mới đúng version
+    if os.path.exists(SCRIPT_NAME):
+        # Kiểm tra xem file hiện tại có phải là bản đúng không, nếu nghi ngờ xóa tải lại
+        # Ở đây ta xóa luôn cho chắc ăn
+        print("♻️ Đang làm mới script training để khớp phiên bản...")
+        os.remove(SCRIPT_NAME)
+
+    print(f"⏳ [LoRA] Đang tải script chuẩn (v0.34.0)...")
+    try:
+        subprocess.run(["wget", "-q", SCRIPT_URL, "-O", SCRIPT_NAME], check=True)
+        print("✅ Đã tải xong script.")
+    except Exception as e:
+        print(f"❌ Lỗi tải script: {e}")
+        print("⚠️ Đang thử link dự phòng (Main branch)...")
+        # Link dự phòng nếu bản v0.34.0 bị lỗi
+        fallback_url = "https://raw.githubusercontent.com/huggingface/diffusers/main/examples/text_to_image/train_text_to_image_lora_sdxl.py"
+        subprocess.run(["wget", "-q", fallback_url, "-O", SCRIPT_NAME], check=True)
+
+def create_accelerate_config():
+    """Tạo file cấu hình accelerate dựa trên số lượng GPU thực tế"""
+    gpu_count = torch.cuda.device_count()
+    print(f"🚀 Phát hiện phần cứng: {gpu_count} GPU")
+    
+    config_dict = {
+        "compute_environment": "LOCAL_MACHINE",
+        "mixed_precision": "fp16",
+        "distributed_type": "NO" if gpu_count <= 1 else "MULTI_GPU",
+        "num_machines": 1,
+        "num_processes": gpu_count,
+        "use_cpu": False,
+    }
+    
+    with open(ACCELERATE_CONFIG_FILE, "w") as f:
+        yaml.dump(config_dict, f)
+    
+    return ACCELERATE_CONFIG_FILE
 
 def run_lora_training(data_dir, output_dir, prompt, base_model_path):
     if output_dir is None:
         output_dir = "output_lora_result"
 
-    # --- 1. XỬ LÝ MODEL PATH (FIX LỖI DEVICE MISMATCH) ---
-    # Script training chuẩn KHÔNG hỗ trợ file .safetensors đơn lẻ tốt.
-    # Nếu phát hiện input là file đơn, ta buộc phải dùng repo gốc trên HuggingFace
-    # để đảm bảo script tải đúng cấu trúc thư mục (UNet/VAE/TextEncoder) về GPU.
+    # --- 1. XỬ LÝ MODEL PATH ---
     if base_model_path.endswith(".safetensors"):
-        print(f"⚠️ CẢNH BÁO: Script training không hỗ trợ trực tiếp file đơn (.safetensors).")
-        print(f"🔄 Đang chuyển sang dùng Repo gốc: stabilityai/stable-diffusion-xl-base-1.0")
-        print(f"   (Việc này giúp tránh lỗi 'Expected all tensors to be on the same device')")
+        print(f"⚠️ CẢNH BÁO: Chuyển sang dùng Repo gốc StabilityAI để tránh lỗi device.")
         train_model_path = "stabilityai/stable-diffusion-xl-base-1.0"
     else:
         train_model_path = base_model_path
 
-    # --- 2. CẤU HÌNH MULTI-GPU (TỰ ĐỘNG) ---
-    # Kiểm tra số lượng GPU
-    gpu_count = torch.cuda.device_count()
-    print(f"🚀 Phát hiện {gpu_count} GPU.")
+    # --- 2. TẠO CONFIG ---
+    config_file = create_accelerate_config()
+
+    # --- 3. LỆNH CHẠY ---
+    cmd = [
+        "accelerate", "launch",
+        "--config_file", config_file,
+        SCRIPT_NAME
+    ]
     
-    # Tạo config mặc định cho accelerate (tránh lỗi chưa config)
-    write_basic_config(mixed_precision="fp16")
-
-    cmd = ["accelerate", "launch"]
-
-    # Nếu có nhiều GPU, thêm tham số để chạy song song (Nhanh gấp đôi)
-    if gpu_count > 1:
-        print("🔥 Kích hoạt chế độ Multi-GPU Training!")
-        cmd.extend([
-            "--multi_gpu",
-            f"--num_processes={gpu_count}"
-        ])
-
-    # Thêm script và các tham số
-    cmd.append(SCRIPT_NAME)
-    
-    # Các tham số training tối ưu
     args = [
         f"--pretrained_model_name_or_path={train_model_path}",
         f"--train_data_dir={data_dir}",
@@ -81,27 +97,23 @@ def run_lora_training(data_dir, output_dir, prompt, base_model_path):
         "--seed=42",
         f"--output_dir={output_dir}",
         f"--validation_prompt={prompt}",
-        
-        # --- CÁC THAM SỐ TỐI ƯU BỘ NHỚ QUAN TRỌNG ---
-        "--gradient_checkpointing", # Tiết kiệm VRAM
-        "--use_8bit_adam",          # Optimizer nhẹ
+        "--gradient_checkpointing", 
+        "--use_8bit_adam",          
         "--report_to=tensorboard",
         "--logging_dir=logs"
     ]
     
-    # Nếu dùng repo HF, ta cần preload model vào cache để tránh lỗi timeout khi chạy multi-process
-    # Nhưng accelerate usually handles this.
-    
     cmd.extend(args)
 
-    print(f"\nexecuting command: {' '.join(cmd)}")
-    print(f"📂 Model Training: {train_model_path}")
+    print(f"\n⚡ Lệnh thực thi: {' '.join(cmd)}")
     
     try:
         subprocess.run(cmd, check=True)
         print(f"\n✅ [LoRA] Training hoàn tất! File tại: {output_dir}/pytorch_lora_weights.safetensors")
     except subprocess.CalledProcessError as e:
-        print(f"\n❌ [LoRA] Lỗi trong quá trình train. Hãy kiểm tra log phía trên.")
+        print(f"\n❌ [LoRA] Lỗi trong quá trình train.")
+        # Mẹo fix lỗi thư viện
+        print("💡 Gợi ý: Nếu lỗi 'ImportError', hãy thử chạy lệnh: pip install -U git+https://github.com/huggingface/diffusers.git")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -115,7 +127,6 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     download_script()
     
-    # Lấy path từ Config nếu không truyền vào
     if args.base_model:
         final_model_path = args.base_model
     else:
